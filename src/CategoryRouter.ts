@@ -3,11 +3,11 @@ import { Router, Request, Response } from "express";
 import { Category,ICategoryPayload } from './interfaces/types';
 import { categoryPlaceholder } from './interfaces/placeholders';
 import {BooksService} from "./api/BooksService";
-
+import { AuthService } from "./api/AuthService";
 export class CategoryRouter {
     private _router: Router;
 
-    constructor(booksService:BooksService) {                
+    constructor(booksService:BooksService,authService:AuthService) {                
         this._router = Router();        
         
         // получить список категорий

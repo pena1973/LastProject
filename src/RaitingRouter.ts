@@ -4,11 +4,11 @@ import { IRaitingPayload, } from './interfaces/types';
 
 import { raitingPlaceholder } from './interfaces/placeholders';
 import {BooksService} from "./api/BooksService";
-
+import { AuthService } from "./api/AuthService";
 export class RaitingRouter {
     private _router: Router;
 
-    constructor(booksService:BooksService) {                
+    constructor(booksService:BooksService,authService:AuthService) {                
         this._router = Router();        
         
        // проверка авторизации

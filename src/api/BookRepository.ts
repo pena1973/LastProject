@@ -1,8 +1,9 @@
 
 import { SupabaseClient, createClient, PostgrestError } from '@supabase/supabase-js'
 import { CurencyRecord, CategoryRecord, AuthorRecord, BookRecord, Book_AuthorRecord, Category_BookRecord, RaitingRecord } from '../interfaces/types';
-import {FieldRecord } from '../interfaces/types';
+import { FieldRecord } from '../interfaces/types';
 import { type } from 'os';
+import { match } from 'assert';
 
 type T = CategoryRecord | CurencyRecord | AuthorRecord | BookRecord | Book_AuthorRecord | Category_BookRecord | RaitingRecord | string;
 
@@ -15,13 +16,52 @@ export class BookRepository {
         this.supabase = createClient(supabaseUrl, supabaseKey);
     }
 
-    public async getAllFromTable(tableName: string) {
-        // Если мы не используем ORM
+    public async getAllFromTable(
+        tableName: string,
+        filter: {field:string, values:string[]|number[]|Date[]|boolean[]} | undefined = undefined,
+        limit: number | undefined = undefined,
+        rangeFrom: number | undefined = undefined,
+        rangeTo: number | undefined = undefined): Promise<{ success: boolean, result: T[] | PostgrestError }> {
+        
+            // Если мы не используем ORM
         //const booksList:Book[] = await this.supabase.query'SELECT * from "BOOKS"';
+           
+        
+        let resultSelect;
+        let condition = String((!filter) ? 0 : 1) + String((rangeFrom===undefined || rangeTo===undefined) ? 0 : 1) + String((!limit) ? 0 : 1);
+        switch (condition) {
+            case "000":
+                resultSelect = await this.supabase.from(tableName).select().returns<T[]>();
+                break
+            case "001":
+                resultSelect = await this.supabase.from(tableName).select().limit(<number>limit).returns<T[]>();
+                break
+            case "010":
+                resultSelect = await this.supabase.from(tableName).select().range(<number>rangeFrom, <number>rangeTo).returns<T[]>();
+                break
+            case "011":
+                resultSelect = await this.supabase.from(tableName).select().range(<number>rangeFrom, <number>rangeTo).limit(<number>limit).returns<T[]>();
+                break
+            case "100":
+                resultSelect = await this.supabase.from(tableName).select().in(<string>filter?.field,<[]>filter?.values).returns<T[]>();
+                break
+            case "101":
+                resultSelect = await this.supabase.from(tableName).select().in(<string>filter?.field,<[]>filter?.values).limit(<number>limit).returns<T[]>();
+                break
+            case "110":
+                // .in('name', ['Albania', 'Algeria'])
+                resultSelect = await this.supabase.from(tableName).select().in(<string>filter?.field,<[]>filter?.values).range(<number>rangeFrom, <number>rangeTo).returns<T[]>();
+                break
+            case "111":
+                resultSelect = await this.supabase.from(tableName).select().in(<string>filter?.field,<[]>filter?.values).range(<number>rangeFrom, <number>rangeTo).limit(<number>limit).returns<T[]>();
+                break
+                default:
+                resultSelect = await this.supabase.from(tableName).select().returns<T[]>();
+        }
 
-        const { data, error, status } = await this.supabase.from(tableName).select();
-        if (status === 200) return data;
-        else return error;
+
+         if (resultSelect.status === 200) return { success: true, result:  <T[]> resultSelect.data };
+         else return { success: false, result: < PostgrestError> resultSelect.error };;
 
     }
     //  поиск в таблице по id
@@ -34,23 +74,42 @@ export class BookRepository {
         else
             return error;
     }
-     //  обновление записи по id, на вход список значений и полей как уже в базе
-     public async updateRecord(tableName: string, id:  number, fields:FieldRecord[]) : Promise<{ success: boolean, result: FieldRecord[] | PostgrestError | null }>{
-        
-        let fieldsArray = fields.map((element:FieldRecord) => {
-            id: Number(id), 
-            element["field"]:element.value,            
-          })       
 
-        const  resultUpdate = await this.supabase.from(tableName)        
-         .upsert([{id: 1, name:'Книга'}, {id: 1, language: 'Русский'}, {id: 1, price: 10.55}])
+    //  обновление записи по id, на вход список значений и полей как уже в базе, возвращает null  и статус успех неуспех
+    public async updateRecord(tableName: string, record: T): Promise<{ success: boolean, result: T | PostgrestError | null }> {
 
-        if (resultUpdate.status === 204)            
-            return { success: true, result: resultUpdate.data };
+        const resultUpdate = await this.supabase.from(tableName).upsert(record).select();
+
+        if (resultUpdate.status === 201) {
+            if ((resultUpdate.data != undefined) && (resultUpdate.data.length > 0))
+                return { success: true, result: resultUpdate.data[0] };
+
+        }
         else
+            console.log(resultUpdate.error);
         return { success: false, result: <PostgrestError>resultUpdate.error };
-           
     }
+    //  Удаление всех записей книги
+    public async deleteRecordsByBookId(tableName: string, id_book: number): Promise<{ success: boolean, result: PostgrestError | null }> {
+        const resultDelete = await this.supabase.from(tableName).delete().eq('id_book', id_book);
+
+        if (resultDelete.status === 204) {
+            return { success: true, result: null };
+        }
+        else
+            return { success: false, result: <PostgrestError>resultDelete.error };
+    }
+    //  Удаление записи по id
+    public async deleteRecordById(tableName: string, id: number): Promise<{ success: boolean, result: PostgrestError | null }> {
+        const resultDelete = await this.supabase.from(tableName).delete().eq('id', id);
+
+        if (resultDelete.status === 204) {
+            return { success: true, result: null };
+        }
+        else
+            return { success: false, result: <PostgrestError>resultDelete.error };
+    }
+
     // вставка записи в таблицу, перед тем как вставить если есть name - проверяет на дубли и если есть вернет существующий
     public async postRecord(tableName: string, record: T): Promise<{ success: boolean, result: T | PostgrestError | null }> {
         const recordSelect: CategoryRecord | CurencyRecord | AuthorRecord | BookRecord = <CategoryRecord | CurencyRecord | AuthorRecord | BookRecord>record;
@@ -126,5 +185,5 @@ export class BookRepository {
         }
 
     }
-   
+
 }  

@@ -2,11 +2,11 @@ import { Router, Request, Response } from "express";
     import { Book,User } from './interfaces/types';
     import { token,booksPlaceholder,userPlaceholder } from './interfaces/placeholders';
     import {BooksService} from "./api/BooksService"
-
+    import { AuthService } from "./api/AuthService";
     export class UserRouter {
         private _router: Router;
     
-        constructor(booksService:BooksService) {
+        constructor(booksService:BooksService,authService:AuthService) {
             this._router = Router();
     
         // логин

@@ -3,7 +3,7 @@ import { type } from "os";
 // поле редактирования в запросе на дедактирование
 export interface Field{
    field: string, 
-   value: Category[]|Curency|Author[]|Raiting|string|number|Date|undefined; 
+   value: [Field[]]|Field[]|string|number|Date|undefined; 
 }
 export interface Book {
     id:number,
@@ -128,5 +128,5 @@ value:number,
 
 export interface FieldRecord{
   field: string, 
-  value: string|number|Date|undefined; 
+  value: string|number|Date|null; 
 }

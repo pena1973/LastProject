@@ -1,60 +1,69 @@
 
-import { Router, Request, Response } from "express";
-import { Book, Category, IBookPayload,Field } from './interfaces/types';
+import { Router, Request, Response, NextFunction } from "express";
+import { Book, Category, IBookPayload, Field } from './interfaces/types';
 import { booksPlaceholder } from './interfaces/placeholders';
 import { BooksService } from "./api/BooksService";
+import { BooksController } from "./controllers/BooksController";
+import { AuthService } from "./api/AuthService";
+import { CategoryRouter } from "./CategoryRouter";
 
 export class BooksRouter {
     private _router: Router;
+    constructor(booksController: BooksController) {
+    // constructor(booksService: BooksService) {
 
-    constructor(booksService: BooksService) {
         this._router = Router();
 
-        // получить список книг
+        // получить список книг готово
+        // req: Request<{}, {}, {}, { perPage: boolean, page: number, categories: string[], limit: number}>, 
         this._router.get('/', async (
-            req: Request<{ perPage: number, page: boolean, category: Category[] }>,
-            res: Response
+            req: Request,
+            res: Response,
+            next: NextFunction
         ) => {
-            const books = booksService.getBooks();
-            console.log(books);
-            res.send(booksPlaceholder)
-        })
-        //!! добавить книгу сделано
-        this._router.post('/', async (
-            req: Request<{}, {}, IBookPayload>,
-            res: Response
-        ) => {
-            const book = await booksService.createBook(req.body);
-            console.log(book);
-            res.send(book)
-
-        })
-        // получить книгу по id
-        this._router.get('/:id',async(
-            req: Request<{ id: string }>,
-            res
-        ) => {
-            console.log(3);
-            res.send(booksPlaceholder)
+            
+            const books = await booksController.getBooks(req, res, next)
+            //console.log(books);
+            res.send(books)
         })
 
-        // редактировать книгу
-        this._router.put('/:id', async(
-            req: Request<{ id: string }, {}, Field[]>,
-            res: Response
-        ) => {
-            const book = await booksService.editBook(req.params.id, req.body);
-            console.log(book);
-            // res.send(book)
-            res.send(booksPlaceholder)
-        })
-        // удалить книгу
-        this._router.delete('/:id', async(
-            req: Request<{}, {}, {}>,
-            res: Response
-        ) => {
-            res.send(booksPlaceholder)
-        })
+        // //!! добавить книгу сделано
+        // this._router.post('/', async (
+        //     req: Request<{}, {}, IBookPayload>,
+        //     res: Response
+        // ) => {
+        //     const book = await booksService.createBook(req.body);
+        //     // console.log(book);
+        //     res.send(book)
+
+        // })
+        // // получить книгу по id
+        // this._router.get('/:id', async (
+        //     req: Request<{ id: string }>,
+        //     res
+        // ) => {
+        //     console.log(3);
+        //     res.send(booksPlaceholder)
+        // })
+
+        // // отредактировать книгу  сделано
+        // this._router.put('/:id', async (
+        //     req: Request<{ id: string }, {}, IBookPayload>,
+        //     res: Response
+        // ) => {
+
+        //     const book = await booksService.editBook(Number(req.params.id), req.body);
+        //     console.log(book);
+        //     res.send(book)
+        // })
+
+        // // удалить книгу
+        // this._router.delete('/:id', async (
+        //     req: Request<{}, {}, {}>,
+        //     res: Response
+        // ) => {
+        //     res.send(booksPlaceholder)
+        // })
     }
 
     get router() {
