@@ -6,64 +6,64 @@ import { BooksService } from "./api/BooksService";
 import { BooksController } from "./controllers/BooksController";
 import { AuthService } from "./api/AuthService";
 import { CategoryRouter } from "./CategoryRouter";
+import { LoggerMiddleware } from "./controllers/LoggerMiddleware";
+import { Middleware } from "./controllers/Controller";
 
 export class BooksRouter {
     private _router: Router;
-    constructor(booksController: BooksController) {
-    // constructor(booksService: BooksService) {
-
+    constructor(booksController: BooksController) {    
         this._router = Router();
 
-        // получить список книг готово
-        // req: Request<{}, {}, {}, { perPage: boolean, page: number, categories: string[], limit: number}>, 
-        this._router.get('/', async (
-            req: Request,
+        // получить список книг
+        this._router.get('/',  async (
+             req: Request<{}, {}, {}, { perPage: boolean, page: number, categories: string[], limit: number}>,            
             res: Response,
-            next: NextFunction
-        ) => {
-            
-            const books = await booksController.getBooks(req, res, next)
-            //console.log(books);
+            next:NextFunction,        
+        ) => {            
+            const books = await booksController.getBooks(req, res, next)            
             res.send(books)
         })
 
-        // //!! добавить книгу сделано
-        // this._router.post('/', async (
-        //     req: Request<{}, {}, IBookPayload>,
-        //     res: Response
-        // ) => {
-        //     const book = await booksService.createBook(req.body);
-        //     // console.log(book);
-        //     res.send(book)
+        //добавить книгу
+        this._router.post('/', async (
+            req: Request<{}, {}, IBookPayload>,
+            res: Response,
+            next
+        ) => {
+            const book = await booksController.postBooks(req, res, next)
+            res.send(book)
 
-        // })
-        // // получить книгу по id
-        // this._router.get('/:id', async (
-        //     req: Request<{ id: string }>,
-        //     res
-        // ) => {
-        //     console.log(3);
-        //     res.send(booksPlaceholder)
-        // })
+         })
 
-        // // отредактировать книгу  сделано
-        // this._router.put('/:id', async (
-        //     req: Request<{ id: string }, {}, IBookPayload>,
-        //     res: Response
-        // ) => {
+        // получить книгу по id
+        this._router.get('/:id', async (
+            req: Request<{ id: string }>,
+            res,
+            next
+        ) => {
+            const book = await booksController.getBook(req, res, next)
+            res.send(book)
+        })
 
-        //     const book = await booksService.editBook(Number(req.params.id), req.body);
-        //     console.log(book);
-        //     res.send(book)
-        // })
+        // отредактировать книгу  сделано
+        this._router.put('/:id', async (
+            req: Request<{ id: string }, {}, IBookPayload>,
+            res: Response,
+            next:NextFunction
+        ) => {
+            const book = await booksController.putBook(req, res, next);
+            res.send(book)
+        })
 
-        // // удалить книгу
-        // this._router.delete('/:id', async (
-        //     req: Request<{}, {}, {}>,
-        //     res: Response
-        // ) => {
-        //     res.send(booksPlaceholder)
-        // })
+        // удалить книгу
+        this._router.delete('/:id', async (
+            req: Request<{ id: string }>,
+            res: Response,
+            next:NextFunction
+        ) => {
+            const succes = await booksController.putBook(req, res, next);
+            res.send(succes)
+        })
     }
 
     get router() {
@@ -89,3 +89,7 @@ export class BooksRouter {
 // PUT /api/v1/books/<bookId> — редактирование книги. В теле запроса можно отправить произвольное количество полей, которые необходимо отредактировать.
 
 // DELETE /api/v1/books/<bookId> — удаление книги по идентификатору.
+
+
+
+

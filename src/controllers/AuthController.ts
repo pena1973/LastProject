@@ -1,35 +1,56 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import {Controller,Middleware} from "./Controller";
-import {ValidateMiddleware} from "./AuthMiddleware";
-import {AuthService} from "../api/AuthService";
+
+import { Controller} from "./Controller";
+import { AuthService } from "../api/AuthService";
+import { sign } from 'jsonwebtoken';
 
 export class AuthController extends Controller {
-    private login() {
-            
-    };
-    // private authService;
-    
-    constructor(authService:AuthService) {
+    private authService: AuthService;
+
+    private  async HashFoo(pass: string) {
+        const { createHmac } = await import('node:crypto')
+        const hash = createHmac('sha256', pass)
+        .update('I love cupcakes')
+        .digest('hex');
+      
+        return hash
+    }
+    constructor(authService: AuthService) {
         super();
-    
-        this.bindRoutes([
-            {
-                path: '/register',
-                method: 'post',
-                fn: this.register,
-                middleware: [new ValidateMiddleware()],
-            },
-            {
-                path: '/login',
-                method: 'post',
-                fn: this.login,
-                middleware: [new ValidateMiddleware()],
-            }
-        ])
-    
+        this.authService = authService;
+        console.log('Инициализация AuthController');
     }
 
-    private register(req:Request, res:Response, next:NextFunction) {
-        //  this.authService.registerUser(req.body);
+    async login(login: string, pass: string) {
+        const user = await this.authService.getUser(login);
+        // проверяем соответствие логин пароль  и если все ок выдаем токен
+       if  (!user.success) return {message: "Юзер не существует!", token:undefined};
+      
+       let hash =  await this.HashFoo(pass);
+        if (user.result.pass = hash) {
+            const token = sign({
+                data: login
+            }, String(process.env.JWTSECRET), { expiresIn: '24h' });
+            return {message: "Успешно!", token:token};
+        }        
+        return {message: "Неправильный пароль!", token:undefined};
+    }
+
+    async  register(login: string, pass: string) {        
+        const existedUser = await this.authService.getUser(login);
+        if (existedUser.success) return {message: " Уже есть такой пользователь!",token:undefined};        
+        // региcтрируем юзера
+        const user = await this.authService.createUser({ 
+            name:"",
+            description:"",
+            email: login,
+            pass:pass
+        });
+        if  (!user.success) return {message: "Юзер не создан!", token:undefined};
+
+        const token = sign({
+            data: login
+        }, String(process.env.JWTSECRET), { expiresIn: '24h' });
+        return {message: "Успешно!", token:token};
+        
     }
 }  

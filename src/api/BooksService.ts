@@ -35,9 +35,6 @@ import { type } from 'os';
 import { rename } from 'fs';
 interface Answer { data: any[] | CurencyRecord | null, error: PostgrestError | null, status: number };
 
-
-
-
 export class BooksService {
     bookRepository: BookRepository;
 
@@ -272,12 +269,11 @@ export class BooksService {
 
         return { success: true, result: resultAuthors };
     }
-    public removeBook(bookId: string | number) {
+    
+    public async removeBook(bookId: string | number) {
         return { success: true };
     }
-    public getUser(userId: string | number) {
-        return { success: true };
-    }
+   
 
     ////////////// СОЗДАНИЕ КНИГИ/////////////////////////
 

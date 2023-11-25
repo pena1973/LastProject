@@ -1,4 +1,3 @@
-import { type } from "os";
 
 // поле редактирования в запросе на дедактирование
 export interface Field{
@@ -16,9 +15,12 @@ export interface Book {
     authors:Author[],
     // raiting:Raiting[],   
   }
-  export interface  User {
-    id: number,
-    name: string,    
+  export interface  User {   
+    id:number,
+    name:string
+    description: string,
+    email: string,
+    pass: string, 
   }
 
   export interface  Category {
@@ -80,8 +82,22 @@ export interface Book {
     birth: number,
     death: number,                
   }
+// поле редактирования в запросе на дедактирование
+export interface IUserPayload{  
+  name:string,
+  description:string,
+  email: string,
+  pass:string,
+}
   
   // DataBase records 
+  export interface UserRecord {
+    id:number,
+    name:string
+    description: string,
+    email: string,
+    pass: string,
+}
   export interface CurencyRecord {
       id:number,
       name:string

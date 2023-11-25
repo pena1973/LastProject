@@ -1,10 +1,10 @@
 import { App } from './src/App';
 import * as dotenv from 'dotenv';
-import {BookRepository} from "./src/api/BookRepository"
+// import {BookRepository} from "./src/api/BookRepository"
 import {BooksController} from "./src/controllers/BooksController"
 import {AuthController} from "./src/controllers/AuthController"
-import {UserController} from "./src/controllers/UserController"
-import { createClient } from '@supabase/supabase-js'
+// import {UserController} from "./src/controllers/UserController"
+// import { createClient } from '@supabase/supabase-js'
 
 import {BooksService} from "./src/api/BooksService"
 import {AuthService} from "./src/api/AuthService"
