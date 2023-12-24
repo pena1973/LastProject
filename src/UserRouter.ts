@@ -19,11 +19,11 @@ export class UserRouter {
 
         // регистрация
         this._router.post('/register', async (
-            req: Request<{}, {}, {email: string, pass: string }>,
+            req: Request<{}, {}, {email: string, pass: string,name:string,about:string }>,
             res: Response
         ) => {
             // (login: string, pass: string
-            const token = await this._authController.register(req.body.email, req.body.pass);
+            const token = await this._authController.register(req.body.email, req.body.pass,req.body.name, req.body.about);
             res.send(token)
 
         })

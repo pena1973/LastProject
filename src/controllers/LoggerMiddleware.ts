@@ -27,7 +27,7 @@ export class LoggerMiddleware extends Middleware {
                 else if (new Date().getMilliseconds() <= pay.exp)
                     next();
                 else
-                // Здесь на страницу регистрации
+                // Здесь на страницу регистрации                
                     res.status(401).send({ error: true, message:"Истек срок годности токена"})
             }
         })

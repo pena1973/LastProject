@@ -13,7 +13,10 @@ export interface Book {
     curency: Curency|undefined,
     published: number,
     authors:Author[],
-    // raiting:Raiting[],   
+    raiting:number,   
+    description:string,
+    esteemes:number,
+    
   }
   export interface  User {   
     id:number,
@@ -55,14 +58,15 @@ export interface Book {
   export interface IBookPayload {
     id:number,
     name: string,
-    categories:ICategoryPayload[],
+    categories:string[],
     language: string,
     price: number,
     curency: string,
     published: number,
-    authors:IAuthorPayload[],
+    authors:string[],
     raiting:number,
-    user:User,    
+    user:string,  
+    description:string,  
   }
   
   export interface ICategoryPayload {  
@@ -72,7 +76,7 @@ export interface Book {
   
   export interface IRaitingPayload {
     id:number,
-    user: User,      
+    user: string,      
     book: Book,      
     raiting: number,
   }
@@ -120,7 +124,8 @@ export interface BookRecord {
   language:string,
   price: number,
   published: number,  
-  curency: number
+  curency: number,
+  description:string,
 }
 
 export interface Book_AuthorRecord {

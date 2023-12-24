@@ -1,6 +1,6 @@
 import { App } from './src/App';
 import * as dotenv from 'dotenv';
-// import {BookRepository} from "./src/api/BookRepository"
+
 import {BooksController} from "./src/controllers/BooksController"
 import {AuthController} from "./src/controllers/AuthController"
 // import {UserController} from "./src/controllers/UserController"
@@ -29,10 +29,9 @@ async function bootstrap() {
     // const categoryController = new CategoryController(new CategoryService(new CategoryRepository(new DBService())));
 
     const app = new App(bookController, authController);
+    
     await app.run();
 }  
-
-
 
 
 bootstrap();

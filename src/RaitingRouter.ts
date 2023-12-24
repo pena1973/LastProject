@@ -2,7 +2,7 @@
 import { Router, Request, Response } from "express";
 import { IRaitingPayload, } from './interfaces/types';
 
-import { raitingPlaceholder } from './interfaces/placeholders';
+// import { raitingPlaceholder } from './interfaces/placeholders';
 import {BooksService} from "./api/BooksService";
 import { AuthService } from "./api/AuthService";
 export class RaitingRouter {
@@ -14,12 +14,12 @@ export class RaitingRouter {
        // проверка авторизации
 
        // добавить рейтинг
-        this._router.post('/rating', (            
-            req: Request<{}, {}, IRaitingPayload[]>,
-            res: Response
-            ) => {
-             res.send(raitingPlaceholder)            
-        })
+        // this._router.post('/rating', (            
+        //     req: Request<{}, {}, IRaitingPayload[]>,
+        //     res: Response
+        //     ) => {
+        //      res.send(raitingPlaceholder)            
+        // })
 
     }
 

@@ -18,13 +18,10 @@ export class AuthMiddleware extends Middleware {
     public handle(req:Request, res:Response, next:NextFunction) {
         const token = String(req.headers.Authorization);
         verify(token, <Secret> process.env.JWTSECRET, (err, payload) => {
-            console.log('AuthMiddleware');
+            // console.log('AuthMiddleware');
             if (err) {
                 res.status(401).send({ error: true, err:err,payload:payload})
-            } else {
-                // принимаем токен?
-                // Не забудьте дополнить types.d.ts для Express
-                //  req.jwtPayload = payload;
+            } else {               
                 next();
             }
         })

@@ -35,13 +35,13 @@ export class AuthController extends Controller {
         return {message: "Неправильный пароль!", token:undefined};
     }
 
-    async  register(login: string, pass: string) {        
+    async  register(login: string, pass: string,name:string,about:string) {        
         const existedUser = await this.authService.getUser(login);
         if (existedUser.success) return {message: " Уже есть такой пользователь!",token:undefined};        
         // региcтрируем юзера
         const user = await this.authService.createUser({ 
-            name:"",
-            description:"",
+            name:name,
+            description:about,
             email: login,
             pass:pass
         });
