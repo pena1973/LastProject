@@ -66,13 +66,13 @@ export class BookRepository {
     }
     //  поиск в таблице по id
     public async getRecordById(tableName: string, id: number): Promise<{ success: boolean, result: T | PostgrestError | null }> {
-        const  resultSelect = await this.supabase.from(tableName).select().eq('id', id).returns<T[]>();
-        if (resultSelect.status === 200){ 
-        
-            if (!resultSelect.data)              return { success: false, result: <T>{}};        
-            else if (resultSelect.data.length>0) return { success: true, result: resultSelect.data[0] };
-            else                                return { success: false, result: <T>{}}
-        }   
+        const resultSelect = await this.supabase.from(tableName).select().eq('id', id).returns<T[]>();
+        if (resultSelect.status === 200) {
+
+            if (!resultSelect.data) return { success: false, result: <T>{} };
+            else if (resultSelect.data.length > 0) return { success: true, result: resultSelect.data[0] };
+            else return { success: false, result: <T>{} }
+        }
         else {
             console.log(resultSelect.error);
             return { success: false, result: <PostgrestError>resultSelect.error }
@@ -80,16 +80,16 @@ export class BookRepository {
     }
     //  поиск в юзера таблице по мейлу
     public async getUserRecordByEMail(email: string): Promise<{ success: boolean, result: UserRecord | PostgrestError }> {
-        const  resultSelect  = await this.supabase.from("user").select().eq('email', email).returns<UserRecord[]>();
+        const resultSelect = await this.supabase.from("user").select().eq('email', email).returns<UserRecord[]>();
         if (resultSelect.status === 200) {
-        if (!resultSelect.data)              return { success: false, result: <UserRecord>{}};        
-        else if (resultSelect.data.length>0) return { success: true, result: <UserRecord>resultSelect.data[0] };
-        else                                 return { success: false, result: <UserRecord>{}}
-    }   
-    else {
-        console.log(resultSelect.error);
-        return { success: false, result: <PostgrestError>resultSelect.error }
-    };
+            if (!resultSelect.data) return { success: false, result: <UserRecord>{} };
+            else if (resultSelect.data.length > 0) return { success: true, result: <UserRecord>resultSelect.data[0] };
+            else return { success: false, result: <UserRecord>{} }
+        }
+        else {
+            console.log(resultSelect.error);
+            return { success: false, result: <PostgrestError>resultSelect.error }
+        };
     }
 
     //  обновление записи по id, на вход список значений и полей как уже в базе, возвращает null  и статус успех неуспех
@@ -132,7 +132,7 @@ export class BookRepository {
         const recordSelect: CategoryRecord | CurencyRecord | AuthorRecord | BookRecord = <CategoryRecord | CurencyRecord | AuthorRecord | BookRecord>record;
 
         //  если name  заполнено проверю наличие записи в базе и если есть  -  отдам сущестсвующую кроме юзера
-        if (recordSelect.name != undefined && tableName !='user') {
+        if (recordSelect.name != undefined && tableName != 'user') {
             const resultSelect = await this.supabase.from(tableName).select().eq('name', recordSelect.name).returns<T[]>();
 
             if (resultSelect.status === 200) {
@@ -179,15 +179,31 @@ export class BookRepository {
         const recordSelect3: RaitingRecord = <RaitingRecord>record;
         if (recordSelect3.id_book != undefined && recordSelect3.id_user != undefined) {
             const resultSelect3 = await this.supabase.from(tableName).select().eq('id_book', recordSelect3.id_book).eq('id_user', recordSelect3.id_user).returns<Book_AuthorRecord[]>();
-
             if (resultSelect3.status === 200) {
                 if ((resultSelect3.data != undefined) && (resultSelect3.data.length > 0))
-                    return { success: true, result: resultSelect3.data[0] };
+                // Запись  уже есть надо только обновить рейтинг в той же записи
+                {
+                    const resultUpdate3 = await this.supabase.from(tableName).upsert({
+                        id: resultSelect3.data[0].id,
+                        id_book: recordSelect3.id_book,
+                        id_user: recordSelect3.id_user,
+                        value: recordSelect3.value,
+                    }).select();
+
+                    if (resultUpdate3.status === 201) {
+                        if ((resultUpdate3.data != undefined) && (resultUpdate3.data.length > 0))
+                            return { success: true, result: resultUpdate3.data[0] };
+                    }
+                    else
+                        console.log(resultUpdate3.error);
+                    return { success: false, result: <PostgrestError>resultUpdate3.error };
+                }
             }
             else {
                 console.log("Ошибка в менент проверики есть ли уже записи таблицы Raiting", resultSelect3.error);
                 return { success: false, result: <PostgrestError>resultSelect3.error };
             }
+
         }
 
         // если нет существующего то добавлю и верну добавленный    

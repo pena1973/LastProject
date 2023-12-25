@@ -158,7 +158,7 @@ export class BooksService {
         } else {
 
             // Книги
-            const resultBookRecords = await this.bookRepository.getAllFromTable('book', undefined, limit, rangeFrom, rangeTo);
+            const resultBookRecords = await this.bookRepository.getAllFromTable('book', undefined, limit, rangeFrom, rangeTo);          
             if (!resultBookRecords.success) return { success: false, result: <Book[]>[] };
 
             bookRecords = <BookRecord[]>resultBookRecords.result;
@@ -226,7 +226,7 @@ export class BooksService {
             //  собираю рейтинг книги
             let values = 0;
             let raiting = 0;
-            let raitingRecordsBook = raitingRecords.filter(elem => { elem.id_book = bookRecord.id })
+            let raitingRecordsBook = raitingRecords.filter(elem => { return (elem.id_book === bookRecord.id) })
             for (let index = 0; index < raitingRecordsBook.length; index++) {
                 values = values + raitingRecordsBook[index].value;
             }
