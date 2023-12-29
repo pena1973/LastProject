@@ -27,6 +27,15 @@ export class UserRouter {
             res.send(token)
 
         })
+        
+        // Проверка сервера
+        this._router.get('/', async (
+            req: Request<{}, {}, {}>,
+            res: Response
+        ) => {
+            res.send("Работает")
+
+        })
 
         //     // Корзина
         //         this._router.get('/user/cart', (req, res) => {
