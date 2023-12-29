@@ -32,7 +32,6 @@ export class App {
 
     private configureRoutes() {
         //options for cors midddleware
-
         // this.app.use(this._loggerMiddleware.handle);
         this.app.use('/api/v1', this.userRouter.router);
         this.app.use('/api/v1/books', this._loggerMiddleware.handle, this.booksRouter.router);
