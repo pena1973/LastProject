@@ -94,7 +94,7 @@ export interface IUserPayload{
   pass:string,
 }
   
-  // DataBase records 
+  /////////////////// DataBase records 
   export interface UserRecord {
     id:number,
     name:string

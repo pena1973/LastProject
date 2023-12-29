@@ -44,11 +44,11 @@ export class BooksController extends Controller {
         }
     }
     async postBooks(
-        req: Request<{}, {}, IBookPayload>,
+        req: Request<{}, {}, IBookPayload[]>,
         res: Response,
         next: NextFunction
     ) {
-        const book = await this.booksService.createBook(req.body);
+        const book = await this.booksService.createBooks(req.body);
         return book;        
 
     }
@@ -60,7 +60,6 @@ export class BooksController extends Controller {
         const book = await this.booksService.editBook(Number(req.params.id), req.body);
         return book;                
     }
-
     async removeBook(
         req: Request<{ id: string }, {}, {}>,
         res: Response,

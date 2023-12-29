@@ -111,6 +111,7 @@ export class BookRepository {
         const resultDelete = await this.supabase.from(tableName).delete().eq('id_book', id_book);
 
         if (resultDelete.status === 204) {
+        // if resultDelete.statusText= 'No Content'
             return { success: true, result: null };
         }
         else

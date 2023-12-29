@@ -24,7 +24,7 @@ export class BooksRouter {
 
         //загрузить книги массово
         this._router.post('/books', async (
-            req: Request<{}, {}, IBookPayload>,
+            req: Request<{}, {}, IBookPayload[]>,
             res: Response,
             next
         ) => {

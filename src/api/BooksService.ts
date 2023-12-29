@@ -158,7 +158,7 @@ export class BooksService {
         } else {
 
             // Книги
-            const resultBookRecords = await this.bookRepository.getAllFromTable('book', undefined, limit, rangeFrom, rangeTo);          
+            const resultBookRecords = await this.bookRepository.getAllFromTable('book', undefined, limit, rangeFrom, rangeTo);
             if (!resultBookRecords.success) return { success: false, result: <Book[]>[] };
 
             bookRecords = <BookRecord[]>resultBookRecords.result;
@@ -270,6 +270,14 @@ export class BooksService {
         // создаем валюту
         let resultCurency = await this.createCurency(bookData.curency);
         if (!resultCurency.success) return { success: false, result: <Book>{} };
+
+        // Создадим  недостающие и заново пропишем категории        
+        let resultCategory = await this.createCategory(bookData.categories);
+        if (!resultCategory.success) return { success: false, result: <Book>{} };
+
+        let resultAuthor = await this.createAutor(<string[]>bookData.authors);
+        if (!resultAuthor.success) return { success: false, result: <Book>{} };
+
         // обновляем  поля таблицы книг
         let resultbook = await this.bookRepository.updateRecord("book", {
             id: bookId,
@@ -279,60 +287,30 @@ export class BooksService {
             curency: resultCurency.result?.id,
             published: bookData.published,
             description: bookData.description,
-        },
-        ).then(
-            (data) => {
-                let bookRecord: BookRecord = <BookRecord>data.result;
-                return {
-                    success: true, result: {
-                        id: bookRecord.id,
-                        language: bookRecord.language,
-                        name: bookRecord.name,
-                        price: bookRecord.price,
-                        published: bookRecord.published,
-                        description: bookRecord.description
-                    }
-                };
-            },
-            (error) => {
-                console.log("error_add_book", error)
-                return { success: false, result: <Book>{} };
-            });
+
+        });
+
         if (!resultbook.success) return { success: false, result: <Book>{} };
+        // если книга успешно добавлена заполняем связи
+        // связь категории и книги
+        let resultCategoryBook = await this.createCategoryBook(bookId, getIdArray(resultCategory.result))
+        if (!resultCategoryBook.success) return { success: false, result: <Book>{} };
+
+        // связь авторов и книги
+        let resultBookAuthor = await this.createBookAuthor(bookId, getIdArray(resultAuthor.result))
+        if (!resultBookAuthor.success) return { success: false, result: <Book>{} };
+
+
         let book: Book = <Book>resultbook.result;
         book.curency = resultCurency.result;
-
-        // Создадим  недостающие и заново пропишем категории
-        let resultCategory = await this.editCategory(bookId, <string[]>bookData.categories);
-        if (!resultCategory.success) return { success: false, result: <Book>{} };
-
         book.categories = resultCategory.result;
-
-        // // обновим авторов  
-        // // приведем  существующих
-        // const existAutors = await this.bookRepository.getAllFromTable('author', { field: 'name', values: bookData.authors });
-        // let autors: IAuthorPayload[] = <IAuthorPayload[]>existAutors.result;
-        // // допишем недостающих
-        // bookData.authors.forEach(el => {
-        //     if (autors.find((element) => element.name === el) === undefined)
-        //         autors.push({ id: BooksService.getUnickID(), name: el, birth: 0, death: 0 });
-        // });
-
-        // let resultAutor = await this.createAutor(<IAuthorPayload[]>autors);
-
-        // if (!resultAutor.success) return { success: false, result: <Book>{} };
-        // book.authors = resultAutor.result;
-
-        let resultAutor = await this.editAutor(bookId, <string[]>bookData.authors);
-        if (!resultCategory.success) return { success: false, result: <Book>{} };
-
-        book.categories = resultCategory.result;
-
+        book.authors = resultAuthor.result;
 
 
         // перезапись рейтинга
         let resultRaiting = await this.createRaiting({ id: BooksService.getUnickID(), user: bookData.user, book: book, raiting: bookData.raiting })
         if (!resultRaiting.success) return { success: false, result: <Book>{} };
+
         // получить общий рейтинг по книге после добавления своего
         const resultCommonRaiting = await this.bookRepository.getAllFromTable('raiting', { field: 'id_book', values: [bookData.id] });
 
@@ -356,194 +334,89 @@ export class BooksService {
         return { success: true, result: book };
 
     }
-    // вспомогательные функции обновления
-    public async editCategory(bookId: number, categories: string[]): Promise<{ success: boolean, result: Category[] }> {
-        // создаем недостающие категории/ если уже есть  вернется существующая
-        let resultCategory = await this.createCategory(categories);
-        if (!resultCategory.success) return { success: false, result: <Category[]>[] }
 
-        // удалим старые связи      
-        let resultdelete = await this.bookRepository.deleteRecordsByBookId('category_book', bookId);
-        if (!resultdelete.success) return { success: false, result: <Category[]>[] }
-
-        // пропишем новые
-        for (let index = 0; index < resultCategory.result.length; index++) {
-            const category = resultCategory.result[index];
-
-            await this.bookRepository.postRecord("category_book", {
-                id: BooksService.getUnickID(),
-                id_book: bookId,
-                id_category: category.id,
-            },
-            ).then(
-                (data) => {
-                    let category_bookRecord: Category_BookRecord = <Category_BookRecord>data.result;
-                    console.log("value_category_book", category_bookRecord)
-                },
-                (error) => {
-                    console.log("error_category_book", error)
-                    return error;
-                });
-        };
-        return { success: true, result: resultCategory.result };
-    }
-    public async editAutor(bookId: number, authors: string[]): Promise<{ success: boolean, result: Author[] }> {
-
-        let resultAuthors: Author[] = [];
-
-        // создаем/обновляем недостающих авторов  только имя, если существует придет который есть
-        for (let index = 0; index < authors.length; index++) {
-            const authorName = authors[index];
-
-            let resultAuthor = await this.bookRepository.postRecord("author", {
-                id: BooksService.getUnickID(), name: authorName,
-            });
-
-            if (!resultAuthor?.success) return { success: false, result: <Author[]>{} };
-            let authorRecord = <AuthorRecord>resultAuthor.result;
-            resultAuthors.push({
-                id: authorRecord.id,
-                name: authorRecord.name,
-                birth: authorRecord.birth,
-                death: authorRecord.death,
-            })
-        }
-
-        // удалим старые связи  все     
-        let resultdelete1 = await this.bookRepository.deleteRecordsByBookId('book_author', bookId);
-        if (!resultdelete1.success) return { success: false, result: <Author[]>[] }
-
-        //  создаем связь авторов и книги  все
-        for (let index = 0; index < resultAuthors.length; index++) {
-            const author = resultAuthors[index];
-            let resultBookAuthorPost = await this.bookRepository.postRecord("book_author", {
-                id: BooksService.getUnickID(),
-                id_book: bookId,
-                id_author: author.id,
-            },);
-
-            if (!resultBookAuthorPost.success) return { success: false, result: <Author[]>[] }
-        };
-        return { success: true, result: resultAuthors };
-    }
-
-    
 
     ////////////// СОЗДАНИЕ КНИГИ не использовала вместо этого edit/////////////////////////
 
     // создание новой книги и связь ее со всеми сущностями
     // export interface IBookPayload { id,name,categories,language,price,curency,published,authors,raiting,user,}
     // проверяем каждую сущность  на дубль по ее имени, если есть просто берем имеющуюся, указываем рейтинг от имени текущего юзера    
-    public async createBook(bookData: IBookPayload): Promise<{ success: boolean, result: Book }> {
-        let bookPay = bookData;
+    public async createBooks(bookData: IBookPayload[]): Promise<{ success: boolean, result: { success: boolean, bookId: number, book: Book }[] }> {
 
-        // собираю  книгу                
-        let book: Book = <Book>{};
-        let resultCategory = await this.createCategory(bookPay.categories);
-        book.categories = resultCategory.result;
-        // авторы
-        // приведем  существующих
-        const existAutors = await this.bookRepository.getAllFromTable('author', { field: 'name', values: bookData.authors });
-        let autors: IAuthorPayload[] = <IAuthorPayload[]>existAutors.result;
-        // допишем недостающих
-        bookData.authors.forEach(el => {
-            if (autors.find((element) => element.name === el) === undefined)
-                autors.push({ id: BooksService.getUnickID(), name: el, birth: 0, death: 0 });
-        });
-        let resultAuthor = await this.createAutor(<IAuthorPayload[]>autors);
-        if (!resultAuthor.success) return { success: false, result: <Book>{} };
+        let result: { success: boolean, bookId: number, book: Book }[] = [];
 
-        book.authors = resultAuthor.result;
+        for (let index = 0; index < bookData.length; index++) {
+            const bookPay = bookData[index];
+            // let result= true;
+            // собираю  книгу               
 
-        let resultCurency = await this.createCurency(bookPay.curency)
-        book.curency = resultCurency.result;
+            // создаем валюту если нет готовой
+            let resultCurency = await this.createCurency(bookPay.curency);
+            if (!resultCurency.success) { result.push({ success: false, bookId: bookPay.id, book: <Book>{} }); continue; }
 
+            // Создадим  недостающие и заново пропишем категории        
+            let resultCategory = await this.createCategory(bookPay.categories);
+            if (!resultCategory.success) { result.push({ success: false, bookId: bookPay.id, book: <Book>{} }); continue; }
 
-        if (resultCurency.success && resultAuthor.success && resultCategory.success) {
+            let resultAuthor = await this.createAutor(<string[]>bookPay.authors);
+            if (!resultAuthor.success) { result.push({ success: false, bookId: bookPay.id, book: <Book>{} }); continue; }
 
-            //  добавить книгу и ее связи        
-            // id created_at name  language price curency published            
-            let resultbook = await this.bookRepository.postRecord("book", {
-                id: BooksService.getUnickID(),
+            // обновляем  поля таблицы книг
+            let resultbook = await this.bookRepository.updateRecord("book", {
+                id: bookPay.id,
                 name: bookPay.name,
                 language: bookPay.language,
                 price: bookPay.price,
                 curency: resultCurency.result?.id,
                 published: bookPay.published,
-            },
-            ).then(
-                (data) => {
-                    let bookRecord: BookRecord = <BookRecord>data.result;
-                    if (!bookRecord) return
-                    book.id = bookRecord.id;
-                    book.language = bookRecord.language;
-                    book.name = bookRecord.name;
-                    book.price = bookRecord.price;
-                    book.published = bookRecord.published;
+                description: bookPay.description,
 
-                    return { success: true, result: book };
-                },
-                (error) => {
-                    console.log("error_add_book", error)
-                    return { success: false, result: book };
-                });
+            });
 
+            if (!resultbook.success) { result.push({ success: false, bookId: bookPay.id, book: <Book>{} }); continue; }
             // если книга успешно добавлена заполняем связи
-            if (resultbook?.success) {
+            // связь категории и книги
+            let resultCategoryBook = await this.createCategoryBook(bookPay.id, getIdArray(resultCategory.result))
+            if (!resultCategoryBook.success) { result.push({ success: false, bookId: bookPay.id, book: <Book>{} }); continue; }
 
-                // связь категории и книги
-                for (let index = 0; index < resultCategory.result.length; index++) {
-                    const category = resultCategory.result[index];
+            // связь авторов и книги
+            let resultBookAuthor = await this.createBookAuthor(bookPay.id, getIdArray(resultAuthor.result))
+            if (!resultBookAuthor.success) { result.push({ success: false, bookId: bookPay.id, book: <Book>{} }); continue; }
 
-                    await this.bookRepository.postRecord("category_book", {
-                        id: BooksService.getUnickID(),
-                        id_book: book.id,
-                        id_category: category.id,
-                    },
-                    ).then(
-                        (data) => {
-                            let category_bookRecord: Category_BookRecord = <Category_BookRecord>data.result;
-                            console.log("value_category_book", category_bookRecord)
-                        },
-                        (error) => {
-                            console.log("error_category_book", error)
-                            return error;
-                        });
-                };
+            let book: Book = <Book>resultbook.result;
+            book.curency = resultCurency.result;
+            book.categories = resultCategory.result;
+            book.authors = resultAuthor.result;
 
-                // связь авторов и книги
-                for (let index = 0; index < resultAuthor.result.length; index++) {
-                    const author = resultAuthor.result[index];
+            // перезапись рейтинга
+            let resultRaiting = await this.createRaiting({ id: BooksService.getUnickID(), user: bookPay.user, book: book, raiting: bookPay.raiting })
+            if (!resultRaiting.success) { result.push({ success: false, bookId: bookPay.id, book: <Book>{} }); continue; }
 
-                    await this.bookRepository.postRecord("book_author", {
-                        id: BooksService.getUnickID(),
-                        id_book: book.id,
-                        id_author: author.id,
-                    },
-                    ).then(
-                        (data) => {
-                            let book_authorRecord: Book_AuthorRecord = <Book_AuthorRecord>data.result;
-                            console.log("value_book_author", book_authorRecord);
-                        },
-                        (error) => {
-                            console.log("value_book_author", error)
-                        });
-                };
+            // получить общий рейтинг по книге после добавления своего
+            const resultCommonRaiting = await this.bookRepository.getAllFromTable('raiting', { field: 'id_book', values: [bookPay.id] });
 
+            let raiting = 0;
+            let esteemes = 0;
 
-                // рейтинг                
-                let resultRaiting = await this.createRaiting({ id: BooksService.getUnickID(), user: bookPay.user, book: book, raiting: bookPay.raiting })
-                // if (resultRaiting.result !== undefined)
-                //  book.raiting.push({id: resultRaiting.result.id, user: bookPay.user, book: book,  value: resultRaiting.result.value   });
-
-                return { success: true, result: book };
-
-            } else {
-                return { success: false, result: <Book>{} };
+            if (resultCommonRaiting.success) {
+                let values = 0;
+                let raitingRecords: RaitingRecord[] = <RaitingRecord[]>resultCommonRaiting.result;
+                for (let index = 0; index < raitingRecords.length; index++) {
+                    values = values + raitingRecords[index].value;
+                }
+                if (raitingRecords.length > 0) {
+                    raiting = values / raitingRecords.length;
+                    esteemes = raitingRecords.length;
+                }
             }
+            book.raiting = raiting;
+            book.esteemes = esteemes;
+            result.push({ success: true, bookId: book.id, book: book });
         }
-        return { success: false, result: <Book>{} };
+
+        return { success: true, result: result };
     }
+
     // колбеки и обработка результатов каскадного добавления
     // создать валюту
     public async createCurency(curencyData: string): Promise<{ success: boolean, result: Curency }> {
@@ -559,7 +432,7 @@ export class BooksService {
                 }
             },
             (error) => {
-                console.log("error_curency", error)
+                // console.log("error_curency", error)
                 return { success: false, result: <Curency>{} };
             });
     }
@@ -574,11 +447,11 @@ export class BooksService {
                 (data) => {
                     let categoryRecord: CategoryRecord = <CategoryRecord>data.result;
 
-                    console.log("value_category", data)
+                    // console.log("value_category", data)
                     return { success: true, result: <Category>{ id: categoryRecord.id, name: categoryRecord.name, } };
                 },
                 (error) => {
-                    console.log("error_category", error)
+                    // console.log("error_category", error)
                     return { success: false, result: <Category>{} };
                 });
             if (result?.success) categories.push({ id: result.result.id, name: result.result.name, });
@@ -586,16 +459,16 @@ export class BooksService {
         return { success: true, result: categories };
     }
     // создать Авторов
-    public async createAutor(authorData: IAuthorPayload[]): Promise<{ success: boolean, result: Author[] }> {
+    public async createAutor(authorData: string[]): Promise<{ success: boolean, result: Author[] }> {
         let authors: Author[] = [];
 
         for (let index = 0; index < authorData.length; index++) {
             const author = authorData[index];
-            let result = await this.bookRepository.postRecord("author", { id: BooksService.getUnickID(), name: author.name, birth: author.birth, death: author.death },)
+            let result = await this.bookRepository.postRecord("author", { id: BooksService.getUnickID(), name: author, birth: 0, death: 0 },)
                 .then((data) => {
                     if (data.success) {
                         let authorRecord: AuthorRecord = <AuthorRecord>data.result;
-                        console.log("value_author", data)
+                        // console.log("value_author", data)
                         return { success: true, result: <Author>{ id: authorRecord.id, name: authorRecord.name, birth: authorRecord.birth, death: authorRecord.death, } };
                     }
                 },
@@ -625,7 +498,7 @@ export class BooksService {
         ).then(
             (data) => {
                 let raitingkRecord: RaitingRecord = <RaitingRecord>data.result;
-                console.log("value_raiting", data)
+                // console.log("value_raiting", data)
                 return {
                     success: true,
                     result: { id: raitingkRecord.id, book: raitingData.book, user: user, value: raitingkRecord.value }
@@ -636,6 +509,56 @@ export class BooksService {
                 return { success: false, result: undefined };
             });
 
+    }
+    // cоздать связь Книга_категория
+    public async createCategoryBook(bookId: number, categoryIds: number[]): Promise<{ success: boolean, result: Category_BookRecord[] }> {
+        let relations: Category_BookRecord[] = [];
+
+        for (let index = 0; index < categoryIds.length; index++) {
+            const categoryId = categoryIds[index];
+
+            await this.bookRepository.postRecord("category_book", {
+                id: BooksService.getUnickID(),
+                id_book: bookId,
+                id_category: categoryId,
+            }).then((data) => {
+                if (data.success) {
+                    let categoryBookRecord = <Category_BookRecord>data.result;
+                    relations.push({
+                        id: categoryBookRecord.id,
+                        id_book: bookId,
+                        id_category: categoryBookRecord.id_category
+                    });
+                }
+            });
+        }
+        return { success: true, result: relations };
+    }
+
+
+    // cоздать связь Книга_Автор
+    public async createBookAuthor(bookId: number, autorsIds: number[]): Promise<{ success: boolean, result: Book_AuthorRecord[] }> {
+        let relations: Book_AuthorRecord[] = [];
+
+        for (let index = 0; index < autorsIds.length; index++) {
+            const authorId = autorsIds[index];
+
+            await this.bookRepository.postRecord("book_author", {
+                id: BooksService.getUnickID(),
+                id_book: bookId,
+                id_author: authorId,
+            }).then((data) => {
+                if (data.success) {
+                    let bookAuthorRecord = <Book_AuthorRecord>data.result;
+                    relations.push({
+                        id: bookAuthorRecord.id,
+                        id_book: bookId,
+                        id_author: bookAuthorRecord.id_author
+                    });
+                }
+            });
+        }
+        return { success: true, result: relations };
     }
 
     ////////////// УДАЛЕНИЕ КНИГИ ПО ИВ/////////////////////////
