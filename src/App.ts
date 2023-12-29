@@ -23,7 +23,7 @@ export class App {
 
         this.app = express();
 
-        this.port = Number(process.env.APP_PORT) || 3000;
+        this.port = Number(process.env.APP_PORT) || 8080;
         this.booksRouter = new BooksRouter(booksController);
         this._loggerMiddleware = new LoggerMiddleware();
         this.userRouter = new UserRouter(authController);
