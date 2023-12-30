@@ -1,8 +1,6 @@
 import { Request, Response, NextFunction } from 'express';
 import { Controller } from "./Controller"
-import { LoggerMiddleware } from "./LoggerMiddleware"
 import { BooksService } from "../api/BooksService";
-import { booksPlaceholder } from '../interfaces/placeholders';
 import { IBookPayload } from '../interfaces/types';
 // класс преобразует записи полученные из базы в обьекты программы
 import { Book, } from '../interfaces/types';

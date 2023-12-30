@@ -1,7 +1,6 @@
-import { Router, Request, Response, NextFunction } from 'express';
-import {Controller,Middleware} from "./Controller";
+import {  Request, Response, NextFunction } from 'express';
+import {Middleware} from "./Controller";
 import { verify,Secret } from 'jsonwebtoken';
-// import { Request } from './types';
 
 export class ValidateMiddleware extends Middleware {
     // Валидация может быть более комплексной

@@ -2,10 +2,7 @@
 import { Router, Request, Response, NextFunction } from "express";
 import { IBookPayload } from './interfaces/types';
 import { BooksController } from "./controllers/BooksController";
-import { AuthService } from "./api/AuthService";
-import { CategoryRouter } from "./CategoryRouter";
-import { LoggerMiddleware } from "./controllers/LoggerMiddleware";
-import { Middleware } from "./controllers/Controller";
+
 
 export class BooksRouter {
     private _router: Router;

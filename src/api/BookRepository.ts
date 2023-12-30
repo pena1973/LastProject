@@ -1,9 +1,7 @@
 
 import { SupabaseClient, createClient, PostgrestError } from '@supabase/supabase-js'
 import { CurencyRecord, CategoryRecord, AuthorRecord, BookRecord, Book_AuthorRecord, Category_BookRecord, RaitingRecord, UserRecord } from '../interfaces/types';
-import { FieldRecord } from '../interfaces/types';
-import { type } from 'os';
-import { match } from 'assert';
+
 
 type T = CategoryRecord | CurencyRecord | AuthorRecord | BookRecord | Book_AuthorRecord | Category_BookRecord | RaitingRecord | UserRecord | string;
 
@@ -26,7 +24,6 @@ export class BookRepository {
         // Если мы не используем ORM
         //const booksList:Book[] = await this.supabase.query'SELECT * from "BOOKS"';
 
-
         let resultSelect;
         let condition = String((!filter) ? 0 : 1) + String((rangeFrom === undefined || rangeTo === undefined) ? 0 : 1) + String((!limit) ? 0 : 1);
         switch (condition) {
@@ -48,8 +45,7 @@ export class BookRepository {
             case "101":
                 resultSelect = await this.supabase.from(tableName).select().in(<string>filter?.field, <[]>filter?.values).limit(<number>limit).returns<T[]>();
                 break
-            case "110":
-                // .in('name', ['Albania', 'Algeria'])
+            case "110":               
                 resultSelect = await this.supabase.from(tableName).select().in(<string>filter?.field, <[]>filter?.values).range(<number>rangeFrom, <number>rangeTo).returns<T[]>();
                 break
             case "111":

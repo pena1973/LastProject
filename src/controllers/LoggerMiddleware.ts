@@ -8,15 +8,11 @@ export class LoggerMiddleware extends Middleware {
     }
 
     public handle(req: Request, res: Response, next: NextFunction) {
-        console.log('LoggerMiddleware');
-        // console.log("req.method", req.method);
-        // console.log("req.path", req.path);
-        // console.log("req.headers", req.headers);
+     
         // const token ='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJkYXRhIjoibmJAbm5uLmNvbSIsImlhdCI6MTcwMDkzOTU4MSwiZXhwIjoxNzAxMDI1OTgxfQ.rXOY6EpvlJROfJJhRmMU0DEKycQXygou5rYe3XTZJqM'        
         const token = String(req.headers.authorization).replace('Bearer ', '');
        
-        verify(token, <Secret>process.env.JWTSECRET, (err, payload) => {
-            console.log('AuthMiddleware');
+        verify(token, <Secret>process.env.JWTSECRET, (err, payload) => {     
             if (err) {
                 console.log('verify err', err);
                 res.status(401).send({ success: false, err: err, payload: payload })

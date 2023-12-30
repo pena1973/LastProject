@@ -1,17 +1,11 @@
-import { createClient } from '@supabase/supabase-js'
+
 import { BooksController } from "../src/controllers/BooksController"
 import { AuthController } from "../src/controllers/AuthController"
-import { BooksService } from "./api/BooksService";
-import { AuthService } from "./api/AuthService";
 import cors from 'cors';
 import express, { Express } from 'express';
-import { json } from 'body-parser';
 import { BooksRouter } from "./BooksRouter"
 import { UserRouter } from "./UserRouter"
-import { CategoryRouter } from "./CategoryRouter"
-import { RaitingRouter } from "./RaitingRouter"
 import { LoggerMiddleware } from "./controllers/LoggerMiddleware";
-// import { AuthMiddleware } from "./controllers/AuthMiddleware";
 export class App {
     private app: Express;
     private _loggerMiddleware: LoggerMiddleware;
@@ -19,15 +13,12 @@ export class App {
     private userRouter: UserRouter;
     private readonly port: number;
     constructor(booksController: BooksController, authController: AuthController) {
-        const app = express();
 
         this.app = express();
-
         this.port = Number(process.env.APP_PORT) || 8080;
         this.booksRouter = new BooksRouter(booksController);
         this._loggerMiddleware = new LoggerMiddleware();
         this.userRouter = new UserRouter(authController);
-
     }
 
     private configureRoutes() {

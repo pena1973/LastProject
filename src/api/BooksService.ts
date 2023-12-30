@@ -37,12 +37,8 @@ export interface UserRecord {
     pass: string,
 }
 import { getIdArray, getIdArrayCategory, getIdArrayAutor } from '../utils'
-// import { v4 as uuidv4 } from 'uuid';
 
 import { BookRepository } from "./BookRepository"
-// import { PostgrestError } from '@supabase/supabase-js';
-
-// interface Answer { data: any[] | CurencyRecord | null, error: PostgrestError | null, status: number };
 
 export class BooksService {
     bookRepository: BookRepository;
@@ -534,7 +530,6 @@ export class BooksService {
         }
         return { success: true, result: relations };
     }
-
 
     // cоздать связь Книга_Автор
     public async createBookAuthor(bookId: number, autorsIds: number[]): Promise<{ success: boolean, result: Book_AuthorRecord[] }> {

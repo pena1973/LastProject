@@ -1,6 +1,6 @@
 
 import { Router, Request, Response } from "express";
-import { Category,ICategoryPayload } from './interfaces/types';
+import { ICategoryPayload } from './interfaces/types';
 import { categoryPlaceholder } from './interfaces/placeholders';
 import {BooksService} from "./api/BooksService";
 import { AuthService } from "./api/AuthService";
